@@ -27,8 +27,8 @@ public class Client extends Application {
     private Button sendBtn;
     //
 
-    private BufferedReader reader;
-    private PrintWriter writer;
+    ObjectOutputStream objectWriter;
+    ObjectInputStream objectReader;
     Scanner input;
     Socket sock;
 
@@ -62,7 +62,15 @@ public class Client extends Application {
                 String msg = messageBox.getText().replaceAll(newLine, "");
                 if ((keyPressed.contains("\r")|| keyPressed.contains("\n") ||
                         keyPressed.contains(newLine)) && !msg.isEmpty()) {
-                    writer.println(clientID + ": " + msg);
+                    try {
+
+                        // TODO: remove after testing
+                        DataPacket data = new DataPacket("public",
+                                new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, msg);
+                        objectWriter.writeObject(data);
+                        objectWriter.flush();
+                        objectWriter.reset();
+                    } catch (IOException e) {e.printStackTrace();}
                     messageBox.clear();
                 }
             }
@@ -78,10 +86,14 @@ public class Client extends Application {
         sendBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                String msg = messageBox.getText().replaceAll(newLine, "");
-                if (!msg.isEmpty()) {
-                    writer.println(clientID + ": " + msg);
-                    messageBox.clear();
+                String message = messageBox.getText().replaceAll(newLine, "");
+                if (!message.isEmpty()) {
+                    try {
+                        objectWriter.writeObject(message);
+                        objectWriter.flush();
+                        objectWriter.reset();
+                        messageBox.clear();
+                    } catch (IOException e) {e.printStackTrace();}
                 }
             }
         });
@@ -109,48 +121,39 @@ public class Client extends Application {
         if (sock.isConnected()) {
             System.out.println("connection established");
         }
-        InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
-        reader = new BufferedReader(streamReader);
-        writer = new PrintWriter(sock.getOutputStream(), true);
+        objectReader = new ObjectInputStream(sock.getInputStream());
+        objectWriter = new ObjectOutputStream(sock.getOutputStream());
 
         // get user ID from server
-        clientID = "user" + reader.readLine();
+        try {
+            Object m = objectReader.readObject();
+            Integer clientNum = (Integer) m;
+            clientID = "user" + clientNum;
+        } catch (ClassNotFoundException e) {e.printStackTrace();}
 
         Thread readerThread = new Thread(new IncomingReader());
-        Thread writerThread = new Thread(new OutgoingWriter());
-
-
         readerThread.start();
-        writerThread.start();
     }
 
     class IncomingReader implements Runnable {
         public void run() {
-            String message;
+            Object m;
             try {
                 // wait until Gui has initiated to receive messages
                 while (sentMessages == null) {
                     Thread.sleep(1000);
                 }
-                while ((message = reader.readLine()) != null) {
-                    System.out.println(message);
-                    sentMessages.appendText(message + newLine);
+                while ((m = objectReader.readObject()) != null) {
+                    String message = (String) m;
+                    sentMessages.appendText(clientID + ": " + message + newLine);
                 }
-            } catch (Exception e) {e.printStackTrace();}
+                sock.close();
+            } catch (IOException e) {e.printStackTrace();}
+            catch (ClassNotFoundException e) {e.printStackTrace();}
+            catch (InterruptedException e) {e.printStackTrace();}
         }
     }
 
-    class OutgoingWriter implements Runnable {
-        public void run() {
-            Scanner scanner = new Scanner(System.in);
-            String message;
-            while (scanner.hasNext()) {
-                message = scanner.nextLine();
-                writer.println(message);
-                sentMessages.appendText(clientID + ": " + message);
-            }
-        }
-    }
 
     public static void main(String[] args) throws IOException {
         launch(args);
@@ -162,6 +165,5 @@ public class Client extends Application {
         System.out.println("starting up client");
         c1.initiateGui(primaryStage);
         c1.setUpNetwork();
-
     }
 }
