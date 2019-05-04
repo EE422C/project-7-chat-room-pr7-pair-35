@@ -75,7 +75,7 @@ public class Client extends Application {
                     try {
 
                         // TODO: remove after testing
-                        DataPacket data = new DataPacket("public", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, message);
+                        DataPacket data = new DataPacket("public", new String[]{clientID}, message);
                         objectWriter.writeObject(data);
                         objectWriter.flush();
                         objectWriter.reset();
@@ -100,7 +100,7 @@ public class Client extends Application {
                 String message = messageBox.getText().replaceAll(newLine, "");
                 if (!message.isEmpty()) {
                     try {
-                        DataPacket data = new DataPacket("public", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, message);
+                        DataPacket data = new DataPacket("public", new String[]{clientID}, message);
                         objectWriter.writeObject(data);
                         objectWriter.flush();
                         objectWriter.reset();
@@ -194,13 +194,6 @@ public class Client extends Application {
         objectReader = new ObjectInputStream(sock.getInputStream());
         objectWriter = new ObjectOutputStream(sock.getOutputStream());
 
-        // get user ID from server
-        try {
-            Object m = objectReader.readObject();
-            Integer clientNum = (Integer) m;
-            clientID = "user" + clientNum;
-        } catch (ClassNotFoundException e) {e.printStackTrace();}
-
         Thread readerThread = new Thread(new IncomingReader());
         readerThread.start();
     }
@@ -215,7 +208,7 @@ public class Client extends Application {
                 }
                 while ((m = objectReader.readObject()) != null) {
                     String message = (String) m;
-                    sentMessages.appendText(clientID + ": " + message + newLine);
+                    sentMessages.appendText(message + newLine);
                 }
                 sock.close();
             } catch (IOException e) {
