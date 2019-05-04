@@ -117,7 +117,7 @@ public class Client extends Application {
     	GridPane DMGrid = setUpGridPane();
         
 
-        //DataPacket data = new DataPacket("public", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, message);
+        
 
       //  DataPacket data = new DataPacket("usersOnNetwork", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, "needAllUsers");
         
@@ -128,6 +128,10 @@ public class Client extends Application {
     		 Button messageBtn = new Button();
     		 messageBtn.setText("Message");
     		 GridPane.setConstraints(messageBtn, 0, 6);
+    		 messageBtn.setOnAction(new EventHandler<ActionEvent>() {
+    	            @Override
+    	            public void handle(ActionEvent event) {}
+    	    });
     		 
     		 
     		 DMGrid.getChildren().addAll(cb, messageBtn);
