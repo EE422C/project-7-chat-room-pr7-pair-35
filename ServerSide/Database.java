@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
+import java.util.List;
 
 public class Database {
 
@@ -69,6 +70,14 @@ public class Database {
         }
 
         connectionSource.close();
+    }
+    
+    public static List<User> getAllUsers(String dbUrl)throws SQLException, IOException{
+    	ConnectionSource connectionSource = new JdbcConnectionSource(dbUrl, "sa", "");
+        Dao<User, String> userDao = DaoManager.createDao(connectionSource, User.class);
+        
+        List<User> users = userDao.queryForAll();
+        return users;
     }
 
     /**

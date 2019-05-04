@@ -1,10 +1,12 @@
 package ServerSide;
 
-import ClientSide.DataPacket;
+//import ClientSide.DataPacket;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+
+import ClientSide.DataPacket;
 
 public class Server extends Observable {
     private Map<String, ObjectOutputStream> clientOutputStream;
@@ -47,8 +49,8 @@ public class Server extends Observable {
             try {
                 while (( m = objectReader.readObject()) != null) {
                     synchronized (this) {    // correct sync placement?
-                        DataPacket data = (DataPacket) m;
-                        unpackData(data);
+                       DataPacket data = (DataPacket) m;
+                       unpackData(data);
                     }
                 }
             } catch (IOException e) {

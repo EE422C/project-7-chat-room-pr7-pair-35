@@ -2,5 +2,8 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path=""/>
+	<classpathentry kind="lib" path="C:/Users/Carlos Villapudua/Documents/EE 422C/chatRoom/project-7-chat-room-pr7-pair-35/h2-1.4.197.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Carlos Villapudua/Documents/EE 422C/chatRoom/project-7-chat-room-pr7-pair-35/ormlite-core-5.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Carlos Villapudua/Documents/EE 422C/chatRoom/project-7-chat-room-pr7-pair-35/ormlite-jdbc-5.1.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

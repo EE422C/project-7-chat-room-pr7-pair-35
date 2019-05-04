@@ -6,22 +6,29 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import ServerSide.Server;
+import ServerSide.Database;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Client extends Application {
 
     public static final String newLine = System.lineSeparator();
+   
 
     // GUI
-    private GridPane grid;
+   
     private TextArea sentMessages;
     private TextField messageBox;
     private Button sendBtn;
@@ -34,12 +41,13 @@ public class Client extends Application {
 
     String clientID;
 
-    public void setUpGridPane() {
-        grid = new GridPane();
+    public GridPane setUpGridPane() {
+        GridPane grid = new GridPane();
         grid.setPadding(new Insets(10,10,10,10));
         grid.addRow(100);
         grid.addColumn(100);
         grid.setVgap(1);
+        return grid;
     }
 
     public void setUpSentMessages() {
@@ -59,18 +67,19 @@ public class Client extends Application {
             @Override
             public void handle(KeyEvent event) {
                 String keyPressed = event.getCharacter();
-                String msg = messageBox.getText().replaceAll(newLine, "");
+                String message = messageBox.getText().replaceAll(newLine, "");
                 if ((keyPressed.contains("\r")|| keyPressed.contains("\n") ||
-                        keyPressed.contains(newLine)) && !msg.isEmpty()) {
+                        keyPressed.contains(newLine)) && !message.isEmpty()) {
                     try {
 
                         // TODO: remove after testing
-                        DataPacket data = new DataPacket("public",
-                                new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, msg);
+                        DataPacket data = new DataPacket("public", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, message);
                         objectWriter.writeObject(data);
                         objectWriter.flush();
                         objectWriter.reset();
-                    } catch (IOException e) {e.printStackTrace();}
+                    } catch (IOException e) {
+                    	//e.printStackTrace();
+                    	}
                     messageBox.clear();
                 }
             }
@@ -89,7 +98,8 @@ public class Client extends Application {
                 String message = messageBox.getText().replaceAll(newLine, "");
                 if (!message.isEmpty()) {
                     try {
-                        objectWriter.writeObject(message);
+                        DataPacket data = new DataPacket("public", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, message);
+                        objectWriter.writeObject(data);
                         objectWriter.flush();
                         objectWriter.reset();
                         messageBox.clear();
@@ -99,16 +109,67 @@ public class Client extends Application {
         });
 
     }
+    
+//    private GridPane setUpDMGroupMsg() {
+//    	GridPane 
+//    }
+    private GridPane setUpDMTab() {
+    	GridPane DMGrid = setUpGridPane();
+        
 
-    public void initiateGui(Stage primaryStage) {
-        setUpGridPane();
-        setUpSentMessages();
+        //DataPacket data = new DataPacket("public", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, message);
+
+      //  DataPacket data = new DataPacket("usersOnNetwork", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, "needAllUsers");
+        
+    	
+    		CheckBox cb = new CheckBox("hello");
+    		 cb.setIndeterminate(false);
+    		 
+    		 Button messageBtn = new Button();
+    		 messageBtn.setText("Message");
+    		 GridPane.setConstraints(messageBtn, 0, 6);
+    		 
+    		 
+    		 DMGrid.getChildren().addAll(cb, messageBtn);
+    		 
+    		 
+    		 
+    	
+    	return DMGrid;
+    }
+
+    private GridPane setUpPublicTab() {
+    	GridPane grid = setUpGridPane();
+    	setUpSentMessages();
         setUpMessageBox();
         setUpSendButton();
-
         grid.getChildren().addAll(sentMessages, messageBox, sendBtn);
+        return grid;
+    	
+    }
+    
+    public void initiateGui(Stage primaryStage) {
+    	
+        
+    	TabPane tabPane = new TabPane();
+    	Tab publicTab = new Tab();
+    	publicTab.setText("Public");
+    	GridPane publicGrid = setUpPublicTab();
+    	publicTab.setContent(publicGrid);
+    	tabPane.getTabs().add(publicTab);
+    	
+    	
+    	Tab dmTab = new Tab();
+    	dmTab.setText("Direct/Group Messages");
+    	GridPane dmGrid = setUpDMTab();
+    	dmTab.setContent(dmGrid);
+    	tabPane.getTabs().add(dmTab);
+    	
+        
 
-        Scene scene = new Scene(grid, 470, 480);
+        
+
+        Scene scene = new Scene(tabPane, 470, 480);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Chat Room");
         primaryStage.show();
@@ -148,7 +209,9 @@ public class Client extends Application {
                     sentMessages.appendText(clientID + ": " + message + newLine);
                 }
                 sock.close();
-            } catch (IOException e) {e.printStackTrace();}
+            } catch (IOException e) {
+            	//e.printStackTrace();
+            	}
             catch (ClassNotFoundException e) {e.printStackTrace();}
             catch (InterruptedException e) {e.printStackTrace();}
         }
