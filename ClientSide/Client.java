@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
@@ -29,6 +30,7 @@ public class Client extends Application {
 
     // GUI
    
+    private TabPane tabPane;
     private TextArea sentMessages;
     private TextField messageBox;
     private Button sendBtn;
@@ -130,7 +132,9 @@ public class Client extends Application {
     		 GridPane.setConstraints(messageBtn, 0, 6);
     		 messageBtn.setOnAction(new EventHandler<ActionEvent>() {
     	            @Override
-    	            public void handle(ActionEvent event) {}
+    	            public void handle(ActionEvent event) {
+    	            	
+    	            }
     	    });
     		 
     		 
@@ -155,7 +159,8 @@ public class Client extends Application {
     public void initiateGui(Stage primaryStage) {
     	
         
-    	TabPane tabPane = new TabPane();
+    	tabPane = new TabPane();
+    	tabPane.setTabClosingPolicy(TabClosingPolicy.SELECTED_TAB);
     	Tab publicTab = new Tab();
     	publicTab.setText("Public");
     	GridPane publicGrid = setUpPublicTab();
