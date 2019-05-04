@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Database {
@@ -24,8 +25,10 @@ public class Database {
         @DatabaseField(id = true)
         private String username;
 
+        /*
         @DatabaseField
         private String password;    // char[] more secure than immutable String for password storage
+        */
 
         @DatabaseField
         private String ipAddress;
@@ -36,7 +39,7 @@ public class Database {
 
         public User(String username, String password) throws UnknownHostException {
             this.username = username;
-            this.password = password;
+            //this.password = password;
             this.ipAddress = InetAddress.getLocalHost().toString().split("/")[1];
         }
 
@@ -45,9 +48,11 @@ public class Database {
             return username;
         }
 
+        /*
         public String getPassword() {
             return password;
         }
+        */
 
         public String getIpAddress() {
             return ipAddress;
@@ -71,14 +76,6 @@ public class Database {
 
         connectionSource.close();
     }
-    
-    public static List<User> getAllUsers(String dbUrl)throws SQLException, IOException{
-    	ConnectionSource connectionSource = new JdbcConnectionSource(dbUrl, "sa", "");
-        Dao<User, String> userDao = DaoManager.createDao(connectionSource, User.class);
-        
-        List<User> users = userDao.queryForAll();
-        return users;
-    }
 
     /**
      * Get a user from the database via username
@@ -100,6 +97,30 @@ public class Database {
     }
 
     /**
+     * Return a list of all users in the database
+     * @param dbUrl URL of database
+     * @return list of users, only including usernames
+     * @throws SQLException error occurs during database accessing process
+     * @throws IOException error occurs on closing ConnectionSource
+     */
+    public static List<String> getAllUsers(String dbUrl) throws SQLException, IOException {
+        ConnectionSource connectionSource = new JdbcConnectionSource(dbUrl, "sa", "");
+        Dao<User, String> userDao = DaoManager.createDao(connectionSource, User.class);
+
+        List<User> users = userDao.queryForAll();
+
+        List<String> usernames = new ArrayList<>();
+
+        for (User u : users) {
+            usernames.add(u.username);
+        }
+
+        connectionSource.close();
+
+        return usernames;
+    }
+
+    /**
      * Remove all users stored in database
      * @param dbUrl URL of database
      * @throws SQLException error occurs during database accessing process
@@ -114,10 +135,14 @@ public class Database {
     }
 
     public static void main(String[] args) throws Exception {
-        //clearDataBase(DATABASE_URL);
-        //User u1 = new User("david", "pass");
-        //addUsertoDatabase(u1, DATABASE_ADDRESS);
-        User u2 = getUserFromDatabase("david", DATABASE_URL);
-        System.out.println(u2.username + " " + u2.password + " " + u2.ipAddress);
+        addUsertoDatabase(new User("david",null), DATABASE_URL);
+        addUsertoDatabase(new User("carlos",null), DATABASE_URL);
+
+        List<String> l1 = getAllUsers(DATABASE_URL);
+
+        for (String s : l1) {
+            System.out.println(s);
+        }
+
     }
 }

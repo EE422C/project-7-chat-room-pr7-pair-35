@@ -4,6 +4,7 @@ package ServerSide;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.*;
 
 import ClientSide.DataPacket;
@@ -30,8 +31,6 @@ public class Server extends Observable {
             clientOutputStream.put(clientSock.getInetAddress().getHostAddress(), writer);
 
             // safe to have here?
-            setChanged();
-            notifyObservers(clientNum);
         }
     }
 
@@ -55,7 +54,8 @@ public class Server extends Observable {
                 }
             } catch (IOException e) {
                 deleteObservers();
-                e.printStackTrace();}
+                System.out.println("client has disconnected");
+            }
             catch (ClassNotFoundException e) {e.printStackTrace();}
         }
     }
@@ -67,21 +67,41 @@ public class Server extends Observable {
         } catch (IOException e) {e.printStackTrace();}
     }
 
+    private void sendUsersList(String address, List<String> usernames) {
+        ObjectOutputStream clientStream = clientOutputStream.get(address);
+        try {
+            clientStream.writeObject(usernames);
+        } catch (IOException e) {e.printStackTrace();}
+    }
+
     private void unpackData(DataPacket data) {
         String type = data.type;
+        String[] recipients = data.recipients;
         String msg = data.message;
 
         if (type.equals("public")) {
             synchronized (this) {
+                String message = recipients[0] + ": " + msg;    // add username to front of message
                 setChanged();
-                notifyObservers(msg);
+                notifyObservers(message);
                 System.out.println("public chat works");
             }
         } else if (type.equals("private")) {
-            for (int i = 0; i < data.recipients.length; i++) {
-                sendDirectMessage(data.recipients[i], msg);
-            }
+            try {
+                for (int i = 0; i < data.recipients.length; i++) {
+                    Database.User user =Database.getUserFromDatabase(recipients[i], Database.DATABASE_URL);
+                    String message = recipients[i] + ": " + msg;
+                    sendDirectMessage(user.getIpAddress(), message);
+                }
+            } catch (Exception e) {e.printStackTrace();}
             System.out.println("private chat works");
+        } else if (type.equals("usersOnNetwork")) {
+            List<String> usernames = new ArrayList<>();
+            try {
+                usernames = Database.getAllUsers(Database.DATABASE_URL);
+                Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
+                sendUsersList(user.getIpAddress(), usernames);
+            } catch (Exception e) {e.printStackTrace();};
         }
     }
 
