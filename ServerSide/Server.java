@@ -109,9 +109,10 @@ public class Server extends Observable {
             } catch (Exception e) {e.printStackTrace();};
         } else if (type.equals("signIn")) {
             try {
+                // if user not already in database, add them
                 Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
                 if (user == null) {
-                    sendDirectMessage(senderIp, "invalid username");
+                    Database.addUsertoDatabase(new Database.User(recipients[0], senderIp), Database.DATABASE_URL);
                 }
             } catch (Exception e) {e.printStackTrace();}
         }
