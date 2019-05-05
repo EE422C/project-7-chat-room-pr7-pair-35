@@ -120,7 +120,7 @@ public class Client extends Application {
     	GridPane DMGrid = setUpGridPane();
     	try {
     		DataPacket data = new DataPacket("usersOnNetwork", new String[]{clientID}, "");
-    		//objectWriter.writeObject(data);
+    		objectWriter.writeObject(data);
     		objectWriter.flush();
     		objectWriter.reset();
     	} catch (IOException e) {      	}
@@ -181,6 +181,12 @@ public class Client extends Application {
                      System.out.println(clientID);
                      signIn = false;
                      setUpMainTabs(primaryStage);
+                     try {
+                 		DataPacket data = new DataPacket("signIn", new String[]{clientID}, "");
+                 		objectWriter.writeObject(data);
+                 		objectWriter.flush();
+                 		objectWriter.reset();
+                 	} catch (IOException e) {      	}
                   }
               }
           });
