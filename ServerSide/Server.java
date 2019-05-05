@@ -2,6 +2,7 @@ package ServerSide;
 
 //import ClientSide.DataPacket;
 import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
@@ -36,10 +37,14 @@ public class Server extends Observable {
 
     class ClientHandler implements Runnable {
         private ObjectInputStream objectReader;
+        private ObjectOutputStream clientWriter;
+        //Socket client;
+        private String clientIp;
 
         public ClientHandler(Socket clientSock) throws IOException {
             Socket client = clientSock;
             objectReader = new ObjectInputStream(client.getInputStream());
+            clientIp = client.getInetAddress().getHostAddress();
         }
 
         @Override
@@ -49,7 +54,7 @@ public class Server extends Observable {
                 while (( m = objectReader.readObject()) != null) {
                     synchronized (this) {    // correct sync placement?
                        DataPacket data = (DataPacket) m;
-                       unpackData(data);
+                       unpackData(data, clientIp);
                     }
                 }
             } catch (IOException e) {
@@ -74,7 +79,7 @@ public class Server extends Observable {
         } catch (IOException e) {e.printStackTrace();}
     }
 
-    private void unpackData(DataPacket data) {
+    private void unpackData(DataPacket data, String senderIp) {
         String type = data.type;
         String[] recipients = data.recipients;
         String msg = data.message;
@@ -102,6 +107,13 @@ public class Server extends Observable {
                 Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
                 sendUsersList(user.getIpAddress(), usernames);
             } catch (Exception e) {e.printStackTrace();};
+        } else if (type.equals("signIn")) {
+            try {
+                Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
+                if (user == null) {
+                    sendDirectMessage(senderIp, "invalid username");
+                }
+            } catch (Exception e) {e.printStackTrace();}
         }
     }
 
