@@ -106,7 +106,7 @@ public class Database {
     public static List<String> getAllUsers(String dbUrl) throws SQLException, IOException {
         ConnectionSource connectionSource = new JdbcConnectionSource(dbUrl, "sa", "");
         Dao<User, String> userDao = DaoManager.createDao(connectionSource, User.class);
-
+      org.h2.tools.Server.createTcpServer().start();
         List<User> users = userDao.queryForAll();
 
         List<String> usernames = new ArrayList<>();

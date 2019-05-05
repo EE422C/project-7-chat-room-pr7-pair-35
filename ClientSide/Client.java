@@ -30,6 +30,7 @@ public class Client extends Application {
 
     // GUI
    
+    private boolean signIn = true;
     private TabPane tabPane;
     private TextArea sentMessages;
     private TextField messageBox;
@@ -117,6 +118,14 @@ public class Client extends Application {
 //    }
     private GridPane setUpDMTab() {
     	GridPane DMGrid = setUpGridPane();
+    	try {
+    		DataPacket data = new DataPacket("usersOnNetwork", new String[]{clientID}, "");
+    		//objectWriter.writeObject(data);
+    		objectWriter.flush();
+    		objectWriter.reset();
+    	} catch (IOException e) {      	}
+    	
+
         
 
         
@@ -156,32 +165,70 @@ public class Client extends Application {
     	
     }
     
+    private GridPane setUpSignInTab(Stage primaryStage) {
+    	GridPane signInGrid = setUpGridPane();
+    	TextField username = new TextField();
+    	  GridPane.setConstraints(username, 0, 6); 
+
+          username.setOnKeyTyped(new EventHandler<KeyEvent>() {
+              @Override
+              public void handle(KeyEvent event) {
+                  String keyPressed = event.getCharacter();
+                  String message = username.getText().replaceAll(newLine, "");
+                  if ((keyPressed.contains("\r")|| keyPressed.contains("\n") ||
+                          keyPressed.contains(newLine)) && !message.isEmpty()) {
+                     clientID = message;
+                     System.out.println(clientID);
+                     signIn = false;
+                     setUpMainTabs(primaryStage);
+                  }
+              }
+          });
+          signInGrid.getChildren().addAll(username);
+    	return signInGrid;
+    }
+    
+    private void showTabPane(TabPane tabPane, Stage primaryStage) {
+    	Scene scene = new Scene(tabPane, 470, 480);
+		primaryStage.setScene(scene);
+		primaryStage.setTitle("Chat Room");
+		primaryStage.show();
+    }
+    
+    private void setUpMainTabs(Stage primaryStage) {
+    	TabPane tabPane = new TabPane();
+		tabPane.setTabClosingPolicy(TabClosingPolicy.SELECTED_TAB);
+		Tab publicTab = new Tab();
+		publicTab.setText("Public");
+		GridPane publicGrid = setUpPublicTab();
+		publicTab.setContent(publicGrid);
+		tabPane.getTabs().add(publicTab);
+	
+		
+		Tab dmTab = new Tab();
+		dmTab.setText("Direct/Group Messages");
+		GridPane dmGrid = setUpDMTab();
+		dmTab.setContent(dmGrid);
+		tabPane.getTabs().add(dmTab);
+		
+		showTabPane(tabPane, primaryStage);
+
+		
+    }
+    
     public void initiateGui(Stage primaryStage) {
     	
         
     	tabPane = new TabPane();
-    	tabPane.setTabClosingPolicy(TabClosingPolicy.SELECTED_TAB);
-    	Tab publicTab = new Tab();
-    	publicTab.setText("Public");
-    	GridPane publicGrid = setUpPublicTab();
-    	publicTab.setContent(publicGrid);
-    	tabPane.getTabs().add(publicTab);
-    	
-    	
-    	Tab dmTab = new Tab();
-    	dmTab.setText("Direct/Group Messages");
-    	GridPane dmGrid = setUpDMTab();
-    	dmTab.setContent(dmGrid);
-    	tabPane.getTabs().add(dmTab);
-    	
-        
+    	Tab signInTab = new Tab();
+		signInTab.setText("Sign-In");
+		GridPane signInGrid = setUpSignInTab(primaryStage);
+		signInTab.setContent(signInGrid);
+		tabPane.getTabs().add(signInTab);
+	
+    
 
-        
-
-        Scene scene = new Scene(tabPane, 470, 480);
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Chat Room");
-        primaryStage.show();
+		showTabPane(tabPane, primaryStage);
     }
 
     public void setUpNetwork() throws IOException {
@@ -228,7 +275,8 @@ public class Client extends Application {
     public void start(Stage primaryStage) throws Exception {
         Client c1 = new Client();
         System.out.println("starting up client");
-        c1.initiateGui(primaryStage);
+        
         c1.setUpNetwork();
+        c1.initiateGui(primaryStage);
     }
 }
