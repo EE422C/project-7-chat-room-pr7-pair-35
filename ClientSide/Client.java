@@ -18,10 +18,11 @@ import javafx.stage.Stage;
 import ServerSide.Server;
 import ServerSide.Database;
 
+
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
+
 
 public class Client extends Application {
 
@@ -29,12 +30,13 @@ public class Client extends Application {
    
 
     // GUI
-   
+    private Map<Integer, privateDM> privateAndGroup;
     private boolean signIn = true;
     private TabPane tabPane;
     private TextArea sentMessages;
     private TextField messageBox;
     private Button sendBtn;
+    private List<String> usersOnNetwork;
     //
 
     ObjectOutputStream objectWriter;
@@ -265,6 +267,11 @@ public class Client extends Application {
                 }
                 while ((m = objectReader.readObject()) != null) {
                     String message = (String) m;
+                    List<String> checkMsg = Arrays.asList(message.split(","));
+                    if (checkMsg.get(0).contentEquals("usersOnNetwork/")) {
+                    	
+                    }
+                    
                     sentMessages.appendText(message + newLine);
                 }
                 sock.close();

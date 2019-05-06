@@ -3,7 +3,9 @@ package ClientSide;
 import java.io.Serializable;
 
 public class DataPacket implements Serializable {
-    public String type;
+    //group chats/private messages are numbered starting from 0 -- null uniqueNo means the chat is public
+	public Integer uniqueNo;
+	public String type;
     public String[] recipients;
     public String message;
 
