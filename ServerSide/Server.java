@@ -75,7 +75,7 @@ public class Server extends Observable {
     public void sendUsersList(String address, List<String> usernames) {
         System.out.println(address);
         ObjectOutputStream clientStream = clientOutputStream.get(address);
-        String userListCSV = "";
+        String userListCSV = "usersOnNetwork/";
         Iterator i = usernames.iterator();
         while (i.hasNext()) {
             userListCSV += i.next();
