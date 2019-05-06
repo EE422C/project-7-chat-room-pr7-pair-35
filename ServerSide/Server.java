@@ -24,14 +24,14 @@ public class Server extends Observable {
         while (true) {
             Socket clientSock = serverSock.accept();
             System.out.println("connection established");
+            String ip = clientSock.getInetAddress().getHostAddress();    // get ip address of client
             ClientObserver writer = new ClientObserver(clientSock.getOutputStream());
-            Thread t = new Thread(new ClientHandler(clientSock));
+            Thread t = new Thread(new ClientHandler(clientSock, ip));
             t.start();
             this.addObserver(writer);
             clientNum = this.countObservers();
-            clientOutputStream.put(clientSock.getInetAddress().getHostAddress(), writer);
+            clientOutputStream.put(ip, writer);
 
-            // safe to have here?
         }
     }
 
@@ -41,10 +41,10 @@ public class Server extends Observable {
         //Socket client;
         private String clientIp;
 
-        public ClientHandler(Socket clientSock) throws IOException {
+        public ClientHandler(Socket clientSock, String clientIp) throws IOException {
             Socket client = clientSock;
             objectReader = new ObjectInputStream(client.getInputStream());
-            clientIp = client.getInetAddress().getHostAddress();
+            this.clientIp = clientIp;
         }
 
         @Override
@@ -72,10 +72,20 @@ public class Server extends Observable {
         } catch (IOException e) {e.printStackTrace();}
     }
 
-    private void sendUsersList(String address, List<String> usernames) {
+    public void sendUsersList(String address, List<String> usernames) {
+        System.out.println(address);
         ObjectOutputStream clientStream = clientOutputStream.get(address);
+        String userListCSV = "";
+        Iterator i = usernames.iterator();
+        while (i.hasNext()) {
+            userListCSV += i.next();
+            if (i.hasNext()) {
+                userListCSV += ",";
+            }
+        }
+        System.out.println(userListCSV);
         try {
-            clientStream.writeObject(usernames);
+            clientStream.writeObject(userListCSV);
         } catch (IOException e) {e.printStackTrace();}
     }
 
@@ -95,7 +105,7 @@ public class Server extends Observable {
             try {
                 for (int i = 0; i < data.recipients.length; i++) {
                     Database.User user =Database.getUserFromDatabase(recipients[i], Database.DATABASE_URL);
-                    String message = recipients[i] + ": " + msg;
+                    String message = recipients[0] + ": " + msg;
                     sendDirectMessage(user.getIpAddress(), message);
                 }
             } catch (Exception e) {e.printStackTrace();}
@@ -112,7 +122,7 @@ public class Server extends Observable {
                 // if user not already in database, add them
                 Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
                 if (user == null) {
-                    Database.addUsertoDatabase(new Database.User(recipients[0], senderIp), Database.DATABASE_URL);
+                    Database.addUsertoDatabase(new Database.User(recipients[0],null ,senderIp), Database.DATABASE_URL);
                 }
             } catch (Exception e) {e.printStackTrace();}
         }

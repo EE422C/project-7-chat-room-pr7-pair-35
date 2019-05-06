@@ -13,6 +13,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Database {
@@ -37,10 +38,10 @@ public class Database {
             // default constructor necessary for H2
         }
 
-        public User(String username, String password) throws UnknownHostException {
+        public User(String username, String password, String ipAddress) throws UnknownHostException {
             this.username = username;
             //this.password = password;
-            this.ipAddress = InetAddress.getLocalHost().toString().split("/")[1];
+            this.ipAddress = ipAddress;
         }
 
 
@@ -135,14 +136,25 @@ public class Database {
     }
 
     public static void main(String[] args) throws Exception {
-        addUsertoDatabase(new User("david",null), DATABASE_URL);
-        addUsertoDatabase(new User("carlos",null), DATABASE_URL);
+        //addUsertoDatabase(new User("david",null), DATABASE_URL);
+        //addUsertoDatabase(new User("carlos",null), DATABASE_URL);
 
         List<String> l1 = getAllUsers(DATABASE_URL);
 
         for (String s : l1) {
             System.out.println(s);
         }
+
+        String userListCSV = "";
+        Iterator i = l1.iterator();
+        while (i.hasNext()) {
+            userListCSV += i.next();
+            if (i.hasNext()) {
+                userListCSV += ",";
+            }
+        }
+
+        System.out.println(userListCSV);
 
     }
 }
