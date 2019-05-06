@@ -180,13 +180,17 @@ public class Client extends Application {
                      clientID = message;
                      System.out.println(clientID);
                      signIn = false;
-                     setUpMainTabs(primaryStage);
+                     
                      try {
                  		DataPacket data = new DataPacket("signIn", new String[]{clientID}, "");
                  		objectWriter.writeObject(data);
+                 		Thread.sleep(1000);
+                 		setUpMainTabs(primaryStage);
                  		objectWriter.flush();
                  		objectWriter.reset();
-                 	} catch (IOException e) {      	}
+                 		
+                 	} catch (Exception e) {      	}
+                     
                   }
               }
           });
