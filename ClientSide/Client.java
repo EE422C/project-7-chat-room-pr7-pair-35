@@ -349,10 +349,14 @@ public class Client extends Application {
             System.out.println(recipients);
         } else if (type.equals("public")) {
             sentMessages.appendText(message + newLine);
+            Sounds.messageReceivedPlayer.play();
+            Sounds.messageReceivedPlayer.seek(Sounds.messageReceivedPlayer.getStartTime());
         } else if (type.equals("private")) {
             Set<String> recipientsNoOrder = new HashSet<>(recipients);
             Conversation c1 = conversations.get(recipientsNoOrder); //TODO: fix this so that order doesn't matter
             c1.sentMessages.appendText(message + newLine);
+            Sounds.messageReceivedPlayer.play();
+            Sounds.messageReceivedPlayer.seek(Sounds.messageReceivedPlayer.getStartTime());
         } else if (type.equals("newPrivateChat")) {
             new Thread(new Runnable() {
                 @Override
@@ -369,7 +373,6 @@ public class Client extends Application {
             }).start();
         }
     }
-
 
     public static void main(String[] args) throws IOException {
         launch(args);
