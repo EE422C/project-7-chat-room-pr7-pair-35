@@ -12,6 +12,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -165,51 +169,13 @@ public class Client extends Application {
                         objectWriter.writeObject(new DataPacket("newPrivateChat", users, null));
                         objectWriter.flush();
                         objectWriter.reset();
-                    } catch (IOException e) {e.printStackTrace();}
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
 
-
-
-
-        /*
-        List<String> users = new ArrayList<>();
-        users.add(clientID);
-        users.add("test");
-        ConversationLabel c1 = new ConversationLabel(directMessageWindow, objectWriter, users);
-        conversations.put(c1.convo.convoMembers, c1.convo);
-
-        conversationList.getChildren().add(c1.stackPane);*/
-
-    	//DMGrid.getChildren().addAll(msg);
-
-        
-
-        
-
-      //  DataPacket data = new DataPacket("usersOnNetwork", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, "needAllUsers");
-        
-    	
-    		/*CheckBox cb = new CheckBox("hello");
-    		 cb.setIndeterminate(false);
-    		 
-    		 Button messageBtn = new Button();
-    		 messageBtn.setText("Message");
-    		 GridPane.setConstraints(messageBtn, 0, 6);
-    		 messageBtn.setOnAction(new EventHandler<ActionEvent>() {
-    	            @Override
-    	            public void handle(ActionEvent event) {
-    	            	
-    	            }
-    	    });
-    		 
-    		 
-    		 DMGrid.getChildren().addAll(cb, messageBtn);*/
-    		 
-    		 
-    		 
-    	
     	return directMessageWindow;
     }
 
@@ -324,6 +290,7 @@ public class Client extends Application {
                     Thread.sleep(1000);
                 }
                 while ((m = objectReader.readObject()) != null) {
+
                     DataPacket message = (DataPacket) m;
                     unpackData(message);
                 }
