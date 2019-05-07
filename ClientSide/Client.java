@@ -49,6 +49,7 @@ public class Client extends Application {
     private HBox directMessageWindow;
     private ListView<String> usersOnline;
     private TextField membersToAdd;
+    private TextField IPAddressBox;
     //
 
 
@@ -170,7 +171,7 @@ public class Client extends Application {
                         objectWriter.flush();
                         objectWriter.reset();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        e.printStackTrace(); 
                     }
                 }
             }
@@ -190,9 +191,29 @@ public class Client extends Application {
     }
     
     private GridPane setUpSignInTab(Stage primaryStage) {
+    	HBox IPBox = new HBox();
+    	IPBox.setSpacing(14);
+    	HBox usernameBox = new HBox();
+    	usernameBox.setSpacing(18);
+    	VBox vbox = new VBox();
+    	vbox.setSpacing(10);
+    	
     	GridPane signInGrid = setUpGridPane();
+    	
+    	Label IPAddressLabel = new Label();
+    	IPAddressLabel.setText("IP-Address: ");
+    	IPAddressBox = new TextField();
+    	IPBox.getChildren().addAll(IPAddressLabel, IPAddressBox);
+    	
+    	Label usernameLabel = new Label();
+    	usernameLabel.setText("Username: ");
     	TextField username = new TextField();
-    	  GridPane.setConstraints(username, 0, 6); 
+    	usernameBox.getChildren().addAll(usernameLabel, username);
+    	
+    	vbox.getChildren().addAll(IPBox, usernameBox);
+    	
+    	
+    	  GridPane.setConstraints(vbox, 0, 6); 
 
           username.setOnKeyTyped(new EventHandler<KeyEvent>() {
               @Override
@@ -220,7 +241,7 @@ public class Client extends Application {
                   }
               }
           });
-          signInGrid.getChildren().addAll(username);
+          signInGrid.getChildren().addAll(vbox);
     	return signInGrid;
     }
     
@@ -268,7 +289,7 @@ public class Client extends Application {
 
     public void setUpNetwork() throws IOException {
         input = new Scanner(System.in);
-        sock = new Socket("localhost", 5001);
+        sock = new Socket(IPAddressBox.getText(), 5001);
 
         if (sock.isConnected()) {
             System.out.println("connection established");
@@ -358,8 +379,9 @@ public class Client extends Application {
     public void start(Stage primaryStage) throws Exception {
         Client c1 = new Client();
         System.out.println("starting up client");
-        c1.setUpNetwork();
+        
         c1.initiateGui(primaryStage);
+        c1.setUpNetwork();
         primaryStage.setOnCloseRequest(event -> System.exit(0));
     }
 }
