@@ -30,7 +30,7 @@ public class Client extends Application {
    
 
     // GUI
-    private Map<Integer, privateDM> privateAndGroup;
+    private ArrayList<privateDM> privateAndGroup;							// 
     private boolean signIn = true;
     private TabPane tabPane;
     private TextArea sentMessages;
@@ -120,12 +120,12 @@ public class Client extends Application {
 //    }
     private GridPane setUpDMTab() {
     	GridPane DMGrid = setUpGridPane();
-    	try {
-    		DataPacket data = new DataPacket("usersOnNetwork", new String[]{clientID}, "");
-    		objectWriter.writeObject(data);
-    		objectWriter.flush();
-    		objectWriter.reset();
-    	} catch (IOException e) {      	}
+    //	try {
+    //		DataPacket data = new DataPacket("usersOnNetwork", new String[]{clientID}, "");
+    //		objectWriter.writeObject(data);
+    //		objectWriter.flush();
+    //		objectWriter.reset();
+    //	} catch (IOException e) {      	}
     	
 
         
@@ -144,7 +144,7 @@ public class Client extends Application {
     		 messageBtn.setOnAction(new EventHandler<ActionEvent>() {
     	            @Override
     	            public void handle(ActionEvent event) {
-    	            	
+    	            	Tab newDMTab = privateDM(String clientID, ObjectOutputStream objectWriter, Integer uniqueNum, ArrayList<String> recipients);
     	            }
     	    });
     		 
@@ -266,9 +266,9 @@ public class Client extends Application {
                     Thread.sleep(1000);
                 }
                 while ((m = objectReader.readObject()) != null) {
-                    String message = (String) m;
-                    List<String> checkMsg = Arrays.asList(message.split(","));
-                    if (checkMsg.get(0).contentEquals("usersOnNetwork/")) {
+                    DataPacket message = (DataPacket) m;
+                   
+                    if (message.type.contentEquals("usersOnNetwork/")) {
                     	
                     }
                     
