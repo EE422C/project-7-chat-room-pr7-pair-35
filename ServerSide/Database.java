@@ -105,12 +105,11 @@ public class Database {
      * @throws IOException error occurs on closing ConnectionSource
      */
     public static List<String> getAllUsers(String dbUrl) throws SQLException, IOException {
+        List<String> usernames = new ArrayList<>();
         ConnectionSource connectionSource = new JdbcConnectionSource(dbUrl, "sa", "");
         Dao<User, String> userDao = DaoManager.createDao(connectionSource, User.class);
-      org.h2.tools.Server.createTcpServer().start();
-        List<User> users = userDao.queryForAll();
 
-        List<String> usernames = new ArrayList<>();
+        List<User> users = userDao.queryForAll();
 
         for (User u : users) {
             usernames.add(u.username);
@@ -152,26 +151,15 @@ public class Database {
         connectionSource.close();
     }
 
+    /*
     public static void main(String[] args) throws Exception {
         //addUsertoDatabase(new User("david",null), DATABASE_URL);
         //addUsertoDatabase(new User("carlos",null), DATABASE_URL);
 
-        List<String> l1 = getAllUsers(DATABASE_URL);
+        List<String> usernames = getUsernamesViaIpAdress(DATABASE_URL, "127.0.0.1");
 
-        for (String s : l1) {
+        for (String s: usernames) {
             System.out.println(s);
         }
-
-        String userListCSV = "";
-        Iterator i = l1.iterator();
-        while (i.hasNext()) {
-            userListCSV += i.next();
-            if (i.hasNext()) {
-                userListCSV += ",";
-            }
-        }
-
-        System.out.println(userListCSV);
-
-    }
+    }*/
 }

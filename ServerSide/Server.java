@@ -11,8 +11,8 @@ import java.util.*;
 import ClientSide.DataPacket;
 
 public class Server extends Observable {
-    private Map<String, ObjectOutputStream> clientOutputStream;
-    private Map<String, String> usersOnline;
+    private Map<Socket, ObjectOutputStream> clientOutputStream;
+    private Map<String, Socket> usersOnline;
     private int clientNum;
 
     public void setUpServer() throws IOException {
@@ -33,7 +33,7 @@ public class Server extends Observable {
             t.start();
             this.addObserver(writer);
             clientNum = this.countObservers();
-            clientOutputStream.put(ip, writer);
+            clientOutputStream.put(clientSock, writer);
 
         }
     }
@@ -41,11 +41,11 @@ public class Server extends Observable {
     class ClientHandler implements Runnable {
         private ObjectInputStream objectReader;
         private ObjectOutputStream clientWriter;
-        //Socket client;
+        Socket client;
         private String clientIp;
 
         public ClientHandler(Socket clientSock, String clientIp) throws IOException {
-            Socket client = clientSock;
+            client = clientSock;
             objectReader = new ObjectInputStream(client.getInputStream());
             this.clientIp = clientIp;
         }
@@ -57,31 +57,40 @@ public class Server extends Observable {
                 while (( m = objectReader.readObject()) != null) {
                     synchronized (this) {    // correct sync placement?
                        DataPacket data = (DataPacket) m;
-                       unpackData(data, clientIp);
+                       unpackData(data, clientIp, client);
                     }
                 }
             } catch (Exception e) {
 
                 // need to remove all instances of client on the server, including observer object
-                usersOnline.remove(clientIp);    // remove username from list of users online
-                Observer o = (Observer) clientOutputStream.get(clientIp);    // cast writer back to observer to delete
+                String username = "";
+                for (Map.Entry<String, Socket> s : usersOnline.entrySet()) {    // find socked using username
+                    if (s.getValue().equals(client)) {
+                        username = s.getKey();
+                    }
+                }
+                usersOnline.remove(username);    // remove username from list of users online
+                Observer o = (Observer) clientOutputStream.get(client);    // cast writer back to observer to delete
                 Server.this.deleteObserver(o);
-                clientOutputStream.remove(clientIp);
+                clientOutputStream.remove(client);
 
-                String users = getUsersOnline();
+                List<String> users = getUsersOnline();
+                DataPacket data = new DataPacket("usersOnNetwork",users, null);
                 synchronized (this) {    // notify clients of new list of users online after clients disconnects
                     setChanged();
-                    notifyObservers(users);
+                    notifyObservers(data);
                 }
                 System.out.println("client has disconnected");
             }
         }
     }
 
-    private void sendDirectMessage(String address, DataPacket message) {
-        ObjectOutputStream clientStream = clientOutputStream.get(address);
+    private void sendDirectMessage(String user, DataPacket message) {
+        ObjectOutputStream clientStream = clientOutputStream.get(usersOnline.get(user));
         try {
             clientStream.writeObject(message);
+            clientStream.flush();
+            clientStream.reset();
         } catch (IOException e) {e.printStackTrace();}
     }
 
@@ -102,37 +111,39 @@ public class Server extends Observable {
         } catch (IOException e) {e.printStackTrace();}
     }*/
 
-    public String getUsersOnline() {
-        Collection<String> users = usersOnline.values();
-        String usersOnlineString = "";
+    private List<String> getUsersOnline() {
+        Collection<String> users = usersOnline.keySet();
+        List<String> usersOnline = new ArrayList<>(users);
+        /*String usersOnlineString = "";
         Iterator i = users.iterator();
         while (i.hasNext()) {
             usersOnlineString += i.next();
             if (i.hasNext()) {
                 usersOnlineString += ",";
             }
-        }
-        return usersOnlineString;
+        }*/
+        return usersOnline;
     }
 
-    private void unpackData(DataPacket data, String senderIp) {
+    private void unpackData(DataPacket data, String senderIp, Socket senderSock) {
         String type = data.type;
-        String[] recipients = data.recipients;
+        List<String> recipients = data.recipients;
         String msg = data.message;
 
         if (type.equals("public")) {
             synchronized (this) {
-                String message = recipients[0] + ": " + msg;    // add username to front of message
+                String message = recipients.get(0) + ": " + msg;    // add username to front of message
                 setChanged();
                 notifyObservers(new DataPacket("public", recipients, message));
                 System.out.println("public chat works");
             }
         } else if (type.equals("private")) {
             try {
-                for (int i = 0; i < data.recipients.length; i++) {
-                    Database.User user =Database.getUserFromDatabase(recipients[i], Database.DATABASE_URL);
-                    String message = recipients[0] + ": " + msg;
-                    sendDirectMessage(user.getIpAddress(), new DataPacket("private", recipients, message));
+                for (int i = 0; i < recipients.size(); i++) {
+                    Database.User user = Database.getUserFromDatabase(recipients.get(i), Database.DATABASE_URL);
+                    System.out.println(user.getUsername() + " " + user.getIpAddress());
+                    String message = recipients.get(0) + ": " + msg;
+                    sendDirectMessage(recipients.get(i), new DataPacket("private", recipients, message));
                 }
             } catch (Exception e) {e.printStackTrace();}
             System.out.println("private chat works");
@@ -146,16 +157,23 @@ public class Server extends Observable {
         } */else if (type.equals("signIn")) {
             try {
                 // if user not already in database, add them
-                Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
+                Database.User user = Database.getUserFromDatabase(recipients.get(0), Database.DATABASE_URL);
                 if (user == null) {
-                    Database.addUsertoDatabase(new Database.User(recipients[0],null ,senderIp), Database.DATABASE_URL);
+                    Database.addUsertoDatabase(new Database.User(recipients.get(0),null ,senderIp), Database.DATABASE_URL);
                 }
-                System.out.println(senderIp + " " + recipients[0]);
-                usersOnline.put(senderIp, recipients[0]);
-                String users = getUsersOnline();
+                System.out.println(senderIp + " " + recipients.get(0));
+                usersOnline.put(recipients.get(0), senderSock);
+                List<String> users = getUsersOnline();
                 synchronized (this) {    // notify clients of users online after new client connects
                     setChanged();
-                    notifyObservers(new DataPacket("usersOnNetwork", recipients, users));
+                    notifyObservers(new DataPacket("usersOnNetwork", users, null));
+                }
+            } catch (Exception e) {e.printStackTrace();}
+        } else if (type.equals("newPrivateChat")) {
+            System.out.println("request for private chat");
+            try {
+                for (int i = 0; i < recipients.size(); i++) {
+                    sendDirectMessage(recipients.get(i), new DataPacket("newPrivateChat", recipients, null));
                 }
             } catch (Exception e) {e.printStackTrace();}
         }

@@ -1,43 +1,53 @@
 package ClientSide;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import ServerSide.Server;
-import ServerSide.Database;
-
 
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
-
+import java.util.List;
 
 public class Client extends Application {
 
     public static final String newLine = System.lineSeparator();
-   
+
+    public static HashMap<Set<String>, Conversation> conversations = new HashMap<>();
+
+    private ObservableList<String> usernamesOnline;
 
     // GUI
-    private ArrayList<privateDM> privateAndGroup;							// 
+   
     private boolean signIn = true;
     private TabPane tabPane;
     private TextArea sentMessages;
     private TextField messageBox;
     private Button sendBtn;
-    private List<String> usersOnNetwork;
+    private VBox conversationList;
+    private HBox directMessageWindow;
+    private ListView<String> usersOnline;
+    private TextField membersToAdd;
     //
+
+
 
     ObjectOutputStream objectWriter;
     ObjectInputStream objectReader;
@@ -60,7 +70,7 @@ public class Client extends Application {
         sentMessages.setEditable(false);
         sentMessages.setWrapText(true);
         GridPane.setConstraints(sentMessages,0,0);
-        sentMessages.setMinWidth(450);
+        sentMessages.setMinWidth(680);
         sentMessages.setMinHeight(400);
     }
 
@@ -75,10 +85,11 @@ public class Client extends Application {
                 String message = messageBox.getText().replaceAll(newLine, "");
                 if ((keyPressed.contains("\r")|| keyPressed.contains("\n") ||
                         keyPressed.contains(newLine)) && !message.isEmpty()) {
+                    List<String> clientUsername = new ArrayList<>();
+                    clientUsername.add(clientID);
                     try {
-
                         // TODO: remove after testing
-                        DataPacket data = new DataPacket("public", new String[]{clientID}, message);
+                        DataPacket data = new DataPacket("public", clientUsername, message);
                         objectWriter.writeObject(data);
                         objectWriter.flush();
                         objectWriter.reset();
@@ -102,8 +113,10 @@ public class Client extends Application {
             public void handle(ActionEvent event) {
                 String message = messageBox.getText().replaceAll(newLine, "");
                 if (!message.isEmpty()) {
+                    List<String> clientUsername = new ArrayList<>();
+                    clientUsername.add(clientID);
                     try {
-                        DataPacket data = new DataPacket("public", new String[]{clientID}, message);
+                        DataPacket data = new DataPacket("public",clientUsername, message);
                         objectWriter.writeObject(data);
                         objectWriter.flush();
                         objectWriter.reset();
@@ -112,21 +125,64 @@ public class Client extends Application {
                 }
             }
         });
-
     }
     
 //    private GridPane setUpDMGroupMsg() {
 //    	GridPane 
 //    }
-    private GridPane setUpDMTab() {
-    	GridPane DMGrid = setUpGridPane();
-    //	try {
-    //		DataPacket data = new DataPacket("usersOnNetwork", new String[]{clientID}, "");
-    //		objectWriter.writeObject(data);
-    //		objectWriter.flush();
-    //		objectWriter.reset();
-    //	} catch (IOException e) {      	}
-    	
+    private HBox setUpDMTab() {
+        Button makeNewConvo = new Button("+");
+        membersToAdd = new TextField();
+
+        usersOnline = new ListView<>(usernamesOnline);
+        usersOnline.setMaxWidth(100);
+        usersOnline.setMinWidth(100);
+        usersOnline.setOnMouseClicked(event -> membersToAdd.appendText(
+                usersOnline.getSelectionModel().getSelectedItem() + ","));
+
+        conversationList = new VBox(makeNewConvo, membersToAdd);
+        ScrollPane scrollPane = new ScrollPane(conversationList);
+        scrollPane.setVmax(200);
+        scrollPane.setMinWidth(202);
+
+        directMessageWindow = new HBox(usersOnline, scrollPane);
+
+        makeNewConvo.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if (!membersToAdd.getText().equals("")) {
+                    String usernames = membersToAdd.getText();
+                    membersToAdd.clear();
+                    List<String> users = new ArrayList<>();
+                    users.add(clientID);
+                    users.addAll(new ArrayList<>(Arrays.asList(usernames.split(","))));
+                    System.out.println(users);
+                    // TODO: server needs to send this
+                    /*ConversationLabel c1 = new ConversationLabel(directMessageWindow, objectWriter, users);
+                    conversations.put(c1.convo.convoMembers, c1.convo);
+                    conversationList.getChildren().add(c1.stackPane);*/
+                    try {
+                        objectWriter.writeObject(new DataPacket("newPrivateChat", users, null));
+                        objectWriter.flush();
+                        objectWriter.reset();
+                    } catch (IOException e) {e.printStackTrace();}
+                }
+            }
+        });
+
+
+
+
+        /*
+        List<String> users = new ArrayList<>();
+        users.add(clientID);
+        users.add("test");
+        ConversationLabel c1 = new ConversationLabel(directMessageWindow, objectWriter, users);
+        conversations.put(c1.convo.convoMembers, c1.convo);
+
+        conversationList.getChildren().add(c1.stackPane);*/
+
+    	//DMGrid.getChildren().addAll(msg);
 
         
 
@@ -135,7 +191,7 @@ public class Client extends Application {
       //  DataPacket data = new DataPacket("usersOnNetwork", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, "needAllUsers");
         
     	
-    		CheckBox cb = new CheckBox("hello");
+    		/*CheckBox cb = new CheckBox("hello");
     		 cb.setIndeterminate(false);
     		 
     		 Button messageBtn = new Button();
@@ -144,17 +200,17 @@ public class Client extends Application {
     		 messageBtn.setOnAction(new EventHandler<ActionEvent>() {
     	            @Override
     	            public void handle(ActionEvent event) {
-    	            	Tab newDMTab = privateDM(String clientID, ObjectOutputStream objectWriter, Integer uniqueNum, ArrayList<String> recipients);
+    	            	
     	            }
     	    });
     		 
     		 
-    		 DMGrid.getChildren().addAll(cb, messageBtn);
+    		 DMGrid.getChildren().addAll(cb, messageBtn);*/
     		 
     		 
     		 
     	
-    	return DMGrid;
+    	return directMessageWindow;
     }
 
     private GridPane setUpPublicTab() {
@@ -182,17 +238,19 @@ public class Client extends Application {
                      clientID = message;
                      System.out.println(clientID);
                      signIn = false;
-                     
+
+                      List<String> clientUsername = new ArrayList<>();
+                      clientUsername.add(clientID);
                      try {
-                 		DataPacket data = new DataPacket("signIn", new String[]{clientID}, "");
+                 		DataPacket data = new DataPacket("signIn",clientUsername, "");
                  		objectWriter.writeObject(data);
-                 		Thread.sleep(1000);
+                 		Thread.sleep(500);
                  		setUpMainTabs(primaryStage);
                  		objectWriter.flush();
                  		objectWriter.reset();
-                 		
                  	} catch (Exception e) {      	}
-                     
+
+                     setUpMainTabs(primaryStage);
                   }
               }
           });
@@ -201,7 +259,7 @@ public class Client extends Application {
     }
     
     private void showTabPane(TabPane tabPane, Stage primaryStage) {
-    	Scene scene = new Scene(tabPane, 470, 480);
+    	Scene scene = new Scene(tabPane, 700, 505);
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Chat Room");
 		primaryStage.show();
@@ -215,11 +273,12 @@ public class Client extends Application {
 		GridPane publicGrid = setUpPublicTab();
 		publicTab.setContent(publicGrid);
 		tabPane.getTabs().add(publicTab);
+
 	
 		
 		Tab dmTab = new Tab();
 		dmTab.setText("Direct/Group Messages");
-		GridPane dmGrid = setUpDMTab();
+		HBox dmGrid = setUpDMTab();
 		dmTab.setContent(dmGrid);
 		tabPane.getTabs().add(dmTab);
 		
@@ -237,8 +296,6 @@ public class Client extends Application {
 		GridPane signInGrid = setUpSignInTab(primaryStage);
 		signInTab.setContent(signInGrid);
 		tabPane.getTabs().add(signInTab);
-	
-    
 
 		showTabPane(tabPane, primaryStage);
     }
@@ -258,6 +315,7 @@ public class Client extends Application {
     }
 
     class IncomingReader implements Runnable {
+        @Override
         public void run() {
             Object m;
             try {
@@ -267,12 +325,7 @@ public class Client extends Application {
                 }
                 while ((m = objectReader.readObject()) != null) {
                     DataPacket message = (DataPacket) m;
-
-                    if (message.type.contentEquals("usersOnNetwork/")) {
-                    	
-                    }
-                    
-                    sentMessages.appendText(message + newLine);
+                    unpackData(message);
                 }
                 sock.close();
             } catch (IOException e) {
@@ -280,6 +333,52 @@ public class Client extends Application {
             	}
             catch (ClassNotFoundException e) {e.printStackTrace();}
             catch (InterruptedException e) {e.printStackTrace();}
+        }
+    }
+
+    class UsersOnlineUpdater implements Runnable {
+        @Override
+        public void run() {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    usersOnline.setItems(usernamesOnline);
+                }
+            });
+        }
+    }
+
+    public void unpackData(DataPacket data) {
+        String type = data.type;
+        List<String> recipients = data.recipients;
+        String message = data.message;
+
+        if (type.equals("usersOnNetwork")) {
+            usernamesOnline = FXCollections.observableArrayList(recipients);
+            Thread updateUsers = new Thread(new UsersOnlineUpdater());
+            updateUsers.start();
+            //TODO:remove
+            System.out.println(recipients);
+        } else if (type.equals("public")) {
+            sentMessages.appendText(message + newLine);
+        } else if (type.equals("private")) {
+            Set<String> recipientsNoOrder = new HashSet<>(recipients);
+            Conversation c1 = conversations.get(recipientsNoOrder); //TODO: fix this so that order doesn't matter
+            c1.sentMessages.appendText(message + newLine);
+        } else if (type.equals("newPrivateChat")) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            ConversationLabel c1 = new ConversationLabel(directMessageWindow, objectWriter, recipients, clientID);
+                            conversations.put((new HashSet<>(recipients)), c1.convo);
+                            conversationList.getChildren().add(c1.stackPane);
+                        }
+                    });
+                }
+            }).start();
         }
     }
 
@@ -292,8 +391,8 @@ public class Client extends Application {
     public void start(Stage primaryStage) throws Exception {
         Client c1 = new Client();
         System.out.println("starting up client");
-        
         c1.setUpNetwork();
         c1.initiateGui(primaryStage);
+        primaryStage.setOnCloseRequest(event -> System.exit(0));
     }
 }
