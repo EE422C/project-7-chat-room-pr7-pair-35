@@ -267,7 +267,7 @@ public class Client extends Application {
                 }
                 while ((m = objectReader.readObject()) != null) {
                     DataPacket message = (DataPacket) m;
-                   
+
                     if (message.type.contentEquals("usersOnNetwork/")) {
                     	
                     }

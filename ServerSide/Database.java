@@ -121,6 +121,23 @@ public class Database {
         return usernames;
     }
 
+    public static List<String> getUsernamesViaIpAdress(String dbURL, String ipAddress) throws SQLException, IOException {
+        List<String> usernames = new ArrayList<>();
+        ConnectionSource connectionSource = new JdbcConnectionSource(dbURL, "sa", "");
+        Dao<User, String> userDao = DaoManager.createDao(connectionSource, User.class);
+
+        // check ipAddress field of table for match(es)
+        List<User> users = userDao.queryForEq("ipAddress", ipAddress);
+
+        for (User u: users) {
+            usernames.add(u.username);
+        }
+
+        connectionSource.close();
+
+        return usernames;
+    }
+
     /**
      * Remove all users stored in database
      * @param dbUrl URL of database

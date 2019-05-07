@@ -12,6 +12,7 @@ import ClientSide.DataPacket;
 
 public class Server extends Observable {
     private Map<String, ObjectOutputStream> clientOutputStream;
+    private Map<String, String> usersOnline;
     private int clientNum;
 
     public void setUpServer() throws IOException {
@@ -20,6 +21,8 @@ public class Server extends Observable {
         ServerSocket serverSock = new ServerSocket(5001);
 
         clientOutputStream = new HashMap<>();
+
+        usersOnline = new HashMap<>();
 
         while (true) {
             Socket clientSock = serverSock.accept();
@@ -57,22 +60,32 @@ public class Server extends Observable {
                        unpackData(data, clientIp);
                     }
                 }
-            } catch (IOException e) {
-                deleteObservers();
+            } catch (Exception e) {
+
+                // need to remove all instances of client on the server, including observer object
+                usersOnline.remove(clientIp);    // remove username from list of users online
+                Observer o = (Observer) clientOutputStream.get(clientIp);    // cast writer back to observer to delete
+                Server.this.deleteObserver(o);
+                clientOutputStream.remove(clientIp);
+
+                String users = getUsersOnline();
+                synchronized (this) {    // notify clients of new list of users online after clients disconnects
+                    setChanged();
+                    notifyObservers(users);
+                }
                 System.out.println("client has disconnected");
             }
-            catch (ClassNotFoundException e) {e.printStackTrace();}
         }
     }
 
-    private void sendDirectMessage(String address, String message) {
+    private void sendDirectMessage(String address, DataPacket message) {
         ObjectOutputStream clientStream = clientOutputStream.get(address);
         try {
             clientStream.writeObject(message);
         } catch (IOException e) {e.printStackTrace();}
     }
 
-    public void sendUsersList(String address, List<String> usernames) {
+    /*public void sendUsersList(String address, List<String> usernames) {
         System.out.println(address);
         ObjectOutputStream clientStream = clientOutputStream.get(address);
         String userListCSV = "usersOnNetwork/";
@@ -87,6 +100,19 @@ public class Server extends Observable {
         try {
             clientStream.writeObject(userListCSV);
         } catch (IOException e) {e.printStackTrace();}
+    }*/
+
+    public String getUsersOnline() {
+        Collection<String> users = usersOnline.values();
+        String usersOnlineString = "";
+        Iterator i = users.iterator();
+        while (i.hasNext()) {
+            usersOnlineString += i.next();
+            if (i.hasNext()) {
+                usersOnlineString += ",";
+            }
+        }
+        return usersOnlineString;
     }
 
     private void unpackData(DataPacket data, String senderIp) {
@@ -98,7 +124,7 @@ public class Server extends Observable {
             synchronized (this) {
                 String message = recipients[0] + ": " + msg;    // add username to front of message
                 setChanged();
-                notifyObservers(message);
+                notifyObservers(new DataPacket("public", recipients, message));
                 System.out.println("public chat works");
             }
         } else if (type.equals("private")) {
@@ -106,23 +132,30 @@ public class Server extends Observable {
                 for (int i = 0; i < data.recipients.length; i++) {
                     Database.User user =Database.getUserFromDatabase(recipients[i], Database.DATABASE_URL);
                     String message = recipients[0] + ": " + msg;
-                    sendDirectMessage(user.getIpAddress(), message);
+                    sendDirectMessage(user.getIpAddress(), new DataPacket("private", recipients, message));
                 }
             } catch (Exception e) {e.printStackTrace();}
             System.out.println("private chat works");
-        } else if (type.equals("usersOnNetwork")) {
+        } /*else if (type.equals("usersOnNetwork")) {
             List<String> usernames = new ArrayList<>();
             try {
                 usernames = Database.getAllUsers(Database.DATABASE_URL);
                 Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
                 sendUsersList(user.getIpAddress(), usernames);
             } catch (Exception e) {e.printStackTrace();};
-        } else if (type.equals("signIn")) {
+        } */else if (type.equals("signIn")) {
             try {
                 // if user not already in database, add them
                 Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
                 if (user == null) {
                     Database.addUsertoDatabase(new Database.User(recipients[0],null ,senderIp), Database.DATABASE_URL);
+                }
+                System.out.println(senderIp + " " + recipients[0]);
+                usersOnline.put(senderIp, recipients[0]);
+                String users = getUsersOnline();
+                synchronized (this) {    // notify clients of users online after new client connects
+                    setChanged();
+                    notifyObservers(new DataPacket("usersOnNetwork", recipients, users));
                 }
             } catch (Exception e) {e.printStackTrace();}
         }
