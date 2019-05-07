@@ -7,6 +7,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
@@ -14,6 +15,8 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import ServerSide.Server;
 import ServerSide.Database;
@@ -120,36 +123,52 @@ public class Client extends Application {
 //    }
     private GridPane setUpDMTab() {
     	GridPane DMGrid = setUpGridPane();
-    //	try {
-    //		DataPacket data = new DataPacket("usersOnNetwork", new String[]{clientID}, "");
-    //		objectWriter.writeObject(data);
-    //		objectWriter.flush();
-    //		objectWriter.reset();
-    //	} catch (IOException e) {      	}
+    	VBox LeftVBox = new VBox();
+    	VBox recipientVBox = new VBox();
+    	recipientVBox.setPadding(new Insets(10, 10, 10, 10));
+    	recipientVBox.setSpacing(10);
+    	VBox MsgVBox = new VBox();
+    	LeftVBox.getChildren().addAll(recipientVBox, MsgVBox);
+    	
+    	
+    	for (int i = 0; i < 10; i++) {
+    		CheckBox cb3 = new CheckBox();
+        	cb3.setText(clientID + "i");
+        	cb3.setIndeterminate(false);
+        	recipientVBox.getChildren().addAll(cb3);
+    	}
+//    	Button messageBtn1 = new Button();
+//    	messageBtn1.setText("Message1");
+//    	recipientVBox.getChildren().addAll(messageBtn1);
+    	
+    	
+//    	HBox hbox = new HBox();
     	
 
-        
+//    	DMGrid.getChildren().addAll(vbox, cb);
+    		 
+    	Button messageBtn = new Button();
+    	messageBtn.setText("Message");
+    	GridPane.setConstraints(messageBtn, 0, 6);
+    	recipientVBox.getChildren().addAll(messageBtn);
+    	messageBtn.setOnAction(new EventHandler<ActionEvent>() {
+    		@Override
+    	    public void handle(ActionEvent event) {
+    			//Tab newDMTab = privateDM(String clientID, ObjectOutputStream objectWriter, Integer uniqueNum, ArrayList<String> recipients);
+    	    }
+    	});
 
-        
-
-      //  DataPacket data = new DataPacket("usersOnNetwork", new String[]{sock.getInetAddress().getHostAddress().split("/")[0]}, "needAllUsers");
-        
     	
-    		CheckBox cb = new CheckBox("hello");
-    		 cb.setIndeterminate(false);
-    		 
-    		 Button messageBtn = new Button();
-    		 messageBtn.setText("Message");
-    		 GridPane.setConstraints(messageBtn, 0, 6);
-    		 messageBtn.setOnAction(new EventHandler<ActionEvent>() {
-    	            @Override
-    	            public void handle(ActionEvent event) {
-    	            	Tab newDMTab = privateDM(String clientID, ObjectOutputStream objectWriter, Integer uniqueNum, ArrayList<String> recipients);
-    	            }
-    	    });
+    	ScrollPane scrollPane = new ScrollPane();
+      	scrollPane.setMaxHeight(200);
+      	scrollPane.setMinWidth(200);
+      	scrollPane.setContent(recipientVBox);
+      	
+      	
+      	LeftVBox.getChildren().addAll(scrollPane);
     		 
     		 
-    		 DMGrid.getChildren().addAll(cb, messageBtn);
+    	DMGrid.getChildren().addAll(LeftVBox);
     		 
     		 
     		 
@@ -266,7 +285,9 @@ public class Client extends Application {
                     Thread.sleep(1000);
                 }
                 while ((m = objectReader.readObject()) != null) {
+
                     DataPacket message = (DataPacket) m;
+
 
                     if (message.type.contentEquals("usersOnNetwork/")) {
                     	
