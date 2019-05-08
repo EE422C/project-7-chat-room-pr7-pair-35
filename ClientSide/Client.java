@@ -53,6 +53,7 @@ public class Client extends Application {
     public static HashMap<Set<String>, Conversation> conversations = new HashMap<>();
 
     private ObservableList<String> usernamesOnline;
+    private boolean setNetwork = false;
 
     // GUI
    
@@ -199,7 +200,7 @@ public class Client extends Application {
     	
     }
     
-    private StackPane setUpSignInTab(Stage primaryStage) {
+    private StackPane setUpSignInTab(Stage primaryStage, Client c1) {
     	HBox IPBox = new HBox();
     	IPBox.setSpacing(14);
     	HBox usernameBox = new HBox();
@@ -242,6 +243,12 @@ public class Client extends Application {
 
                       List<String> clientUsername = new ArrayList<>();
                       clientUsername.add(clientID);
+                      try {
+  						c1.setUpNetwork();
+  					} catch (IOException e) {
+  						// TODO Auto-generated catch block
+  						e.printStackTrace();
+  					}
                      try {
                  		DataPacket data = new DataPacket("signIn",clientUsername, "");
                  		objectWriter.writeObject(data);
@@ -250,8 +257,10 @@ public class Client extends Application {
                  		objectWriter.flush();
                  		objectWriter.reset();
                  	} catch (Exception e) {      	}
-
+                     
                      setUpMainTabs(primaryStage);
+                     
+                     
                   }
               }
           });
@@ -286,12 +295,12 @@ public class Client extends Application {
 		showTabPane(tabPane, primaryStage);
     }
     
-    public void initiateGui(Stage primaryStage) {
+    public void initiateGui(Stage primaryStage, Client c1) {
     	tabPane = new TabPane();
     	Tab signInTab = new Tab();
     	signInTab.setClosable(false);
 		signInTab.setText("Sign-In");
-		StackPane signInGrid = setUpSignInTab(primaryStage);
+		StackPane signInGrid = setUpSignInTab(primaryStage, c1);
 		signInTab.setContent(signInGrid);
 		tabPane.getTabs().add(signInTab);
 
@@ -300,7 +309,11 @@ public class Client extends Application {
 
     public void setUpNetwork() throws IOException {
         input = new Scanner(System.in);
-        sock = new Socket(IPAddressBox.getText(), 5001);
+        //while (!setNetwork) {}
+       //sock = new Socket("10.145.84.24", 5001);
+        //sock = new Socket("10.145.84.24", 5001);
+       sock = new Socket(IPAddressBox.getText(), 5001);
+
 
         if (sock.isConnected()) {
             System.out.println("connection established");
@@ -390,11 +403,13 @@ public class Client extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+    	
         Client c1 = new Client();
         System.out.println("starting up client");
-        
-        c1.initiateGui(primaryStage);
-        c1.setUpNetwork();
+        c1.initiateGui(primaryStage, c1);
+
+      
+//        c1.setUpNetwork();
         primaryStage.setOnCloseRequest(event -> System.exit(0));
     }
 }
