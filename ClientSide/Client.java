@@ -1,3 +1,16 @@
+/* CHAT ROOM <MyClass.java>
+ * EE422C Project 7 submission by
+ * Replace <...> with your actual data.
+ * Carlos Villapudua
+ * civ398
+ * 16190
+ * David Day
+ * dld2864
+ * 16190
+ * Slip days used: 1
+ * Spring 2019
+ */
+
 package ClientSide;
 
 import javafx.application.Application;
@@ -19,9 +32,12 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -131,10 +147,7 @@ public class Client extends Application {
             }
         });
     }
-    
-//    private GridPane setUpDMGroupMsg() {
-//    	GridPane 
-//    }
+
     private HBox setUpDMTab() {
         Button makeNewConvo = new Button("+");
         membersToAdd = new TextField();
@@ -161,11 +174,7 @@ public class Client extends Application {
                     List<String> users = new ArrayList<>();
                     users.add(clientID);
                     users.addAll(new ArrayList<>(Arrays.asList(usernames.split(","))));
-                    System.out.println(users);
-                    // TODO: server needs to send this
-                    /*ConversationLabel c1 = new ConversationLabel(directMessageWindow, objectWriter, users);
-                    conversations.put(c1.convo.convoMembers, c1.convo);
-                    conversationList.getChildren().add(c1.stackPane);*/
+                    //System.out.println(users);
                     try {
                         objectWriter.writeObject(new DataPacket("newPrivateChat", users, null));
                         objectWriter.flush();
@@ -190,7 +199,7 @@ public class Client extends Application {
     	
     }
     
-    private GridPane setUpSignInTab(Stage primaryStage) {
+    private StackPane setUpSignInTab(Stage primaryStage) {
     	HBox IPBox = new HBox();
     	IPBox.setSpacing(14);
     	HBox usernameBox = new HBox();
@@ -199,19 +208,24 @@ public class Client extends Application {
     	vbox.setSpacing(10);
     	
     	GridPane signInGrid = setUpGridPane();
-    	
-    	Label IPAddressLabel = new Label();
-    	IPAddressLabel.setText("IP-Address: ");
+
+        StackPane stackPane = new StackPane();
+        Image image = new Image("signInImage.jpg");
+        ImageView imageView = new ImageView(image);
+        imageView.setFitHeight(505);
+        imageView.setFitWidth(700);
+
     	IPAddressBox = new TextField();
-    	IPBox.getChildren().addAll(IPAddressLabel, IPAddressBox);
-    	
-    	Label usernameLabel = new Label();
-    	usernameLabel.setText("Username: ");
+    	IPAddressBox.setPromptText("IP Address");
+    	IPBox.getChildren().addAll(IPAddressBox);
+
     	TextField username = new TextField();
-    	usernameBox.getChildren().addAll(usernameLabel, username);
+    	username.setPromptText("username");
+    	usernameBox.getChildren().addAll(username);
     	
     	vbox.getChildren().addAll(IPBox, usernameBox);
-    	
+
+    	stackPane.getChildren().addAll(imageView, signInGrid);
     	
     	  GridPane.setConstraints(vbox, 0, 6); 
 
@@ -242,7 +256,7 @@ public class Client extends Application {
               }
           });
           signInGrid.getChildren().addAll(vbox);
-    	return signInGrid;
+    	return stackPane;
     }
     
     private void showTabPane(TabPane tabPane, Stage primaryStage) {
@@ -256,31 +270,28 @@ public class Client extends Application {
     	TabPane tabPane = new TabPane();
 		tabPane.setTabClosingPolicy(TabClosingPolicy.SELECTED_TAB);
 		Tab publicTab = new Tab();
+		publicTab.setClosable(false);
 		publicTab.setText("Public");
 		GridPane publicGrid = setUpPublicTab();
 		publicTab.setContent(publicGrid);
 		tabPane.getTabs().add(publicTab);
 
-	
-		
 		Tab dmTab = new Tab();
+		dmTab.setClosable(false);
 		dmTab.setText("Direct/Group Messages");
 		HBox dmGrid = setUpDMTab();
 		dmTab.setContent(dmGrid);
 		tabPane.getTabs().add(dmTab);
 		
 		showTabPane(tabPane, primaryStage);
-
-		
     }
     
     public void initiateGui(Stage primaryStage) {
-    	
-        
     	tabPane = new TabPane();
     	Tab signInTab = new Tab();
+    	signInTab.setClosable(false);
 		signInTab.setText("Sign-In");
-		GridPane signInGrid = setUpSignInTab(primaryStage);
+		StackPane signInGrid = setUpSignInTab(primaryStage);
 		signInTab.setContent(signInGrid);
 		tabPane.getTabs().add(signInTab);
 
@@ -345,7 +356,6 @@ public class Client extends Application {
             usernamesOnline = FXCollections.observableArrayList(recipients);
             Thread updateUsers = new Thread(new UsersOnlineUpdater());
             updateUsers.start();
-            //TODO:remove
             System.out.println(recipients);
         } else if (type.equals("public")) {
             sentMessages.appendText(message + newLine);

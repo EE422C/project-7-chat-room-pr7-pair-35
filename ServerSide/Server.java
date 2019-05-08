@@ -1,6 +1,19 @@
+/* CHAT ROOM <MyClass.java>
+ * EE422C Project 7 submission by
+ * Replace <...> with your actual data.
+ * Carlos Villapudua
+ * civ398
+ * 16190
+ * David Day
+ * dld2864
+ * 16190
+ * Slip days used: 1
+ * Spring 2019
+ */
+
 package ServerSide;
 
-//import ClientSide.DataPacket;
+import ClientSide.DataPacket;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -94,34 +107,11 @@ public class Server extends Observable {
         } catch (IOException e) {e.printStackTrace();}
     }
 
-    /*public void sendUsersList(String address, List<String> usernames) {
-        System.out.println(address);
-        ObjectOutputStream clientStream = clientOutputStream.get(address);
-        String userListCSV = "usersOnNetwork/";
-        Iterator i = usernames.iterator();
-        while (i.hasNext()) {
-            userListCSV += i.next();
-            if (i.hasNext()) {
-                userListCSV += ",";
-            }
-        }
-        System.out.println(userListCSV);
-        try {
-            clientStream.writeObject(userListCSV);
-        } catch (IOException e) {e.printStackTrace();}
-    }*/
 
     private List<String> getUsersOnline() {
         Collection<String> users = usersOnline.keySet();
         List<String> usersOnline = new ArrayList<>(users);
-        /*String usersOnlineString = "";
-        Iterator i = users.iterator();
-        while (i.hasNext()) {
-            usersOnlineString += i.next();
-            if (i.hasNext()) {
-                usersOnlineString += ",";
-            }
-        }*/
+
         return usersOnline;
     }
 
@@ -147,14 +137,7 @@ public class Server extends Observable {
                 }
             } catch (Exception e) {e.printStackTrace();}
             System.out.println("private chat works");
-        } /*else if (type.equals("usersOnNetwork")) {
-            List<String> usernames = new ArrayList<>();
-            try {
-                usernames = Database.getAllUsers(Database.DATABASE_URL);
-                Database.User user = Database.getUserFromDatabase(recipients[0], Database.DATABASE_URL);
-                sendUsersList(user.getIpAddress(), usernames);
-            } catch (Exception e) {e.printStackTrace();};
-        } */else if (type.equals("signIn")) {
+        } else if (type.equals("signIn")) {
             try {
                 // if user not already in database, add them
                 Database.User user = Database.getUserFromDatabase(recipients.get(0), Database.DATABASE_URL);

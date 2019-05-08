@@ -1,5 +1,17 @@
-package ClientSide;
+/* CHAT ROOM <MyClass.java>
+ * EE422C Project 7 submission by
+ * Replace <...> with your actual data.
+ * Carlos Villapudua
+ * civ398
+ * 16190
+ * David Day
+ * dld2864
+ * 16190
+ * Slip days used: 1
+ * Spring 2019
+ */
 
+package ClientSide;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
